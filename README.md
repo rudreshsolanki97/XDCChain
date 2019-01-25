@@ -1,168 +1,161 @@
-# Tomochain
+# XinFin Delegated Proof of Stake (DPOS) Consensus
 
-[![Build Status](https://travis-ci.org/tomochain/tomochain.svg?branch=master)](https://travis-ci.org/tomochain/tomochain)
-[![Join the chat at https://gitter.im/tomochain/tomochain](https://badges.gitter.im/tomochain/tomochain.svg)](https://gitter.im/tomochain/tomochain?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+Self KYC compliant Delegated Proof of Stake (DPOS) Consensus on XDC Blockchain
 
-## About Tomochain
+Delegated Proof of Stake (DPOS) is the fastest, efficient, decentralized, and flexible consensus model available. DPOS leverages the power of stakeholder approval voting to resolve consensus issues in a fair and democratic way. Self KYC feature adds more enterpise usecases and regulator friendliness to the Public network.
 
-TomoChain is an innovative solution to the scalability problem with the Ethereum blockchain.
-Our mission is to be a leading force in building the Internet of Value, and its infrastructure.
-We are working to create an alternative, scalable financial system which is more secure, transparent, efficient, inclusive, and equitable for everyone.
+This document describes the specification for a XinFin DPoS (Delegated Proof of Stake) network.
 
-TomoChain relies on a system of 150 Masternodes with a Proof of Stake Voting consensus that can support near-zero fee, and 2-second transaction confirmation times.
-Security, stability, and chain finality are guaranteed via novel techniques such as double validation, staking via smart-contracts, and "true" randomization processes.
+XinFin Spec
 
-Tomochain supports all EVM-compatible smart-contracts, protocols, and atomic cross-chain token transfers.
-New scaling techniques such as sharding, private-chain generation, and hardware integration will be continuously researched and incorporated into Tomochain's masternode architecture. This architecture will be an ideal scalable smart-contract public blockchain for decentralized apps, token issuances, and token integrations for small and big businesses.
+    Voting
+        Staking
+        Delegating
+        Withdrawal
+    Validators Registration with KYC document
+    Choosing Validators
+        Balanced staked
+    Rewards
+    Fork Peversion, Malicious or Double Spends
+    Slashing
+        Off-chain
+        On-chain
+    Parameters
+    Upgradability
 
-More details can be found at our [technical white paper](https://tomochain.com/docs/technical-whitepaper---1.0.pdf)
+Voting
 
-Read more about us on:
+Any network participant will be able to vote for eligible Validators.
 
-- our website: http://tomochain.com
-- our blogs and announcements: https://medium.com/tomochain
-- our documentation portal: https://docs.tomochain.com
+    Staking
 
-## Building the source
+    Users can stake their coins by sending them to the deposit function on the staking contract.
+        The staked amount must be larger than an amount MIN_STAKE
+        The user will have to wait for 2 epochs (epoch N+2) before being able to vote for a delegate.
+    Delegating
+        After 2 epochs, a Nominator can vote for a Validator with the staked coins.
+        The vote will be effective in the epoch N+2, N being the current epoch.
+        A new vote can be casted every 2 epochs.
+        In this version, the entire stake must be voted to a single Validator. If a user wants to delegate to multiple Validators they can split their stake amongst several accounts which can then individually register as Nominators.
+    Withdrawal
 
-Tomochain provides a client binary called `tomo` for both running a masternode and running a full-node.
-Building `tomo` requires both a Go (1.7+) and C compiler; install both of these.
+    Nominators should be able to withdraw their stake.
+        First they must call delegate to remove their vote.
+        After a specified number of epochs WITHDRAWAL_PERIOD the funds are unlocked and withdraw function on the smart contract can be called with a withdrawal address.
 
-Once the dependencies are installed, just run the below commands:
+Validators Registration
 
-```bash
-$ git clone https://github.com/tomochain/tomochain tomochain
-$ cd tomochain
-$ make tomo
-```
+Any network participant will be able to register as a Validator.
 
-Alternatively, you could quickly download our pre-complied binary from our [github release page](https://github.com/tomochain/tomochain/releases)
+    A specified value REGISTRATION_VALUE (in the native token) will be sent to a register function on the contract. It will be staked in order to limit the number of participants.
+    Validator is required to add KYC document at the time of staking XDC token.
+    A hard limit to the total number of registered Validators MAX_REGISTERED_VALIDATORS should be specified.
+    Any Validator registering will have to wait for the beginning of epoch N+2 (current epoch being N) to be eligible.
+    A Validator's total stake must be greater than the MIN_TOTAL_STAKE in order for it to be eligible.
+    The top validators (by a total stake) in a given epoch are chosen as the active Validator Set: those Validators that produce blocks in the next epoch.
 
-## Running tomo
+KYC:
 
-### Running a tomo masternode
+Masternode Holder need to Add Know your customer (KYC) identification as its falls under the responsibility of financial institution and/or regulated company. Validator needs to upload self KYC document and this document will be visible on open public network.
 
-Please refer to the [official documentation](https://docs.tomochain.com/get-started/run-node/) on how to run a node if your goal is to run a masternode.
-The recommanded ways of running a node and applying to become a masternode are explained in detail there.
+Choosing Validators
 
-### Attaching to the Tomochain test network
+choose L Validators for a certain epoch N
 
-We published our test network 2.0 with full implementation of PoSV consensus at https://stats.testnet.tomochain.com.
-If you'd like to experiment with smart contract creation and DApps, you might be interested to give these a try on our Testnet.
+    Balanced staked
 
-In order to connect to one of the masternodes on the Testnet, just run the command below:
+    This version of the DPoS contract should balance all the stakes by finding the minimum staked for all eligible Validators (eg. take the top 1000 Validators) and balance all the Validators stakes by refunding the users the contributions that overflowed the stake.
 
-```bash
-$ tomo attach https://testnet.tomochain.com
-```
+    For example, if the minimum stake is S, we want to balance all stakes to S. If a Validator has S+100 stakes because of 3 contributions: S−10, 5 and 100, then the last nominator will be refunded 95.
 
-This will open the JavaScript console and let you query the blockchain directly via RPC.
+    In this model, an epoch would be of the maximum number of Validators allowed, eg. 1,001 (+/- an hour on a 4-seconds block time chain).
 
-### Running tomo locally
+Rewards
 
-If you would like to run tomo locally to see how it works under the hood and have a copy of the blockchain, you can try it on our Testnet by running the commands below:
+Rewards are assigned via the Rewards Contract.
 
-```bash
-// 1. create a folder to store tomochain data on your machine
-$ export DATA_DIR=/path/to/your/data/folder
-$ mkdir -p $DATA_DIR/tomo
+    Rewards for active Validators are calculated as a percentage of total stake, VALIDATOR_REWARD.
+    Nominators would also need to be rewarded to incentivize them to stake. There are a couple of options here:
+        The reward contract pays directly out to nominators, minus a fee payed the Validator, which could be specified when registering.
+        The Validator is responsible for calculating/paying out the rewards. This could be done by allowing the Validators to register their own Reward Contract when registering.
 
-// 2. download our genesis file
-$ export GENESIS_PATH=$DATA_DIR/genesis.json
-$ curl -L https://raw.githubusercontent.com/tomochain/tomochain/master/genesis/testnet.json -o $GENESIS_PATH
+Fork Perversion, Malicious or Double Spends:
 
-// 3. init the chain from genesis
-$ tomo init $GENESIS_PATH --datadir $DATA_DIR
+To Prevent fork, we like to add feature to re-validate transaction. Every transaction will have 2 signatures. one signature will be by block creator and second signature will be by block verifier (both separate validator). So, block verifier will check for malicious or double spends etc.
 
-// 4. get a test account. Create a new one if you don't have any:
-$ export KEYSTORE_DIR=keystore
-$ touch $DATA_DIR/password && echo 'your-password' > $DATA_DIR/password
-$ tomo account new \
-      --datadir $DATA_DIR \
-      --keystore $KEYSTORE_DIR \
-      --password $DATA_DIR/password
+Slashing
 
-// if you already have a test account, import it now
-$ tomo  account import ./private_key \
-      --datadir $DATA_DIR \
-      --keystore $KEYSTORE_DIR \
-      --password $DATA_DIR/password
+In order for the network to be secure, misbehaviours must be detected and punished.
 
-// get the account
-$ account=$(
-  tomo account list --datadir $DATA_DIR  --keystore $KEYSTORE_DIR \
-  2> /dev/null \
-  | head -n 1 \
-  | cut -d"{" -f 2 | cut -d"}" -f 1
-)
+    Off-chain
 
-// 5. prepare the bootnodes list
-$ export BOOTNODES="enode://4d3c2cc0ce7135c1778c6f1cfda623ab44b4b6db55289543d48ecfde7d7111fd420c42174a9f2fea511a04cf6eac4ec69b4456bfaaae0e5bd236107d3172b013@52.221.28.223:30301,enode://298780104303fcdb37a84c5702ebd9ec660971629f68a933fd91f7350c54eea0e294b0857f1fd2e8dba2869fcc36b83e6de553c386cf4ff26f19672955d9f312@13.251.101.216:30301,enode://46dba3a8721c589bede3c134d755eb1a38ae7c5a4c69249b8317c55adc8d46a369f98b06514ecec4b4ff150712085176818d18f59a9e6311a52dbe68cff5b2ae@13.250.94.232:30301"
+    Off-chain detection of misbehaviour is easier to implement and can be used for tricky misbehaviour detections. In the contract, there will be a reportBenign method (part of the Validator Set Contract) that only Validators can call, passing a message and a block-number, and a slashing will execute if more than 2/3 of the Validators agree on the misbehaviour.
 
-// 6. Start up tomo now
-$ export NAME=YOUR_NODE_NAME
-$ tomo \
-  --verbosity 4 \
-  --datadir $DATA_DIR \
-  --keystore $KEYSTORE_DIR \
-  --identity $NAME \
-  --password $DATA_DIR \
-  --networkid 89 \
-  --port 30303 \
-  --rpc \
-  --rpccorsdomain "*" \
-  --rpcaddr 0.0.0.0 \
-  --rpcport 8545 \
-  --rpcvhosts "*" \
-  --ws \
-  --wsaddr 0.0.0.0 \
-  --wsport 8546 \
-  --wsorigins "*" \
-  --mine \
-  --gasprice "1" \
-  --targetgaslimit "420000000"
-```
+    These might include but are not limited to:
+        Validators consistently propagating blocks late
+        Validators being offline for more than 24 hours
 
-*Some explanations on the flags*
+    It could slash a portion of the stakes, eg. only 4%
+    On-chain
 
-```
---verbosity: log level from 1 to 5. Here we're using 4 for debug messages
---datadir: path to your data directory created above.
---keystore: path to your account's keystore created above.
---identity: your full-node's name.
---password: your account's password.
---networkid: our testnet network ID.
---port: your full-node's listening port (default to 30303)
---rpc, --rpccorsdomain, --rpcaddr, --rpcport, --rpcvhosts: your full-node will accept RPC requests at 8545 TCP.
---ws, --wsaddr, --wsport, --wsorigins: your full-node will accept Websocket requests at 8546 TCP.
---mine: your full-node wants to register to be a candidate for masternode selection.
---gasprice: Minimal gas price to accept for mining a transaction.
---targetgaslimit: Target gas limit sets the artificial target gas floor for the blocks to mine (default: 4712388)
-```
+    A slashing condition that can be verified on-chain is that a Validator signed-off 2 blocks with the same step (equivocation). Anyone could call this reportMalicious method with the right data, being the two signatures of the Validator, and the message signed, which would contain the step of the blocks.
 
-## Road map
+    This method would thus include an RLP decoder. We could also detect if a Validator hasn't signed any block for the past 256 blocks on-chain, by challenging the Validator to submit the block he signed along with the signature. However, only the last 256 block hashes are available in the EVM, so it might be limited in this context of around 1,000-blocks epochs.
+        Wrong KYC Detail Enter by Validator Node
+        In the contract, there will be a reportMalicious method that only Validators can call, passing a message and a block-number, and a slashing will execute if more than 2/3 of the Validators agree on the reportMalicious. It could slash a portion of the Entire 100% stakes of Validator Node.
 
-The implementation of the following features is being studied by our research team:
+    There may be other on-chain slashable conditions.
 
-- Layer 2 scalability with state sharding
-- DEX integration
-- Spam filtering
-- Multi-chain interoperabilty
+Parameters
 
-## Contributing and technical discussion
+Suggested parameter values from requirements:
 
-Thank you for considering to try out our network and/or help out with the source code.
-We would love to get your help; feel free to lend a hand.
-Even the smallest bit of code, bug reporting, or just discussing ideas are highly appreciated.
+MIN_STAKE : 10,000,000 XDC
 
-If you would like to contribute to the tomochain source code, please refer to our Developer Guide for details on configuring development environment, managing dependencies, compiling, testing and submitting your code changes to our repo.
+VALIDATOR_REWARD : 0.01370% Daily
 
-Please also make sure your contributions adhere to the base coding guidelines:
+REWARDS_TRANSFER : Every next block of epoch
 
-- Code must adhere to official Go [formatting](https://golang.org/doc/effective_go.html#formatting) guidelines (i.e uses [gofmt](https://golang.org/cmd/gofmt/)).
-- Code comments must adhere to the official Go [commentary](https://golang.org/doc/effective_go.html#commentary) guidelines.
-- Pull requests need to be based on and opened against the `master` branch.
-- Any code you are trying to contribute must be well-explained as an issue on our [github issue page](https://github.com/tomochain/tomochain/issues)
-- Commit messages should be short but clear enough and should refer to the corresponding pre-logged issue mentioned above.
+VALIDATOR_SET_SIZE : 18-21
 
-For technical discussion, feel free to join our chat at [Gitter](https://gitter.im/tomochain/tomochain).
+WITHDRAWAL_PERIOD : Set of Epoch (1 Epoch == 500 Blocks)
+
+MAX_REGISTERED_VALIDATORS : 5000
+
+Upgradability
+
+Contracts should be upgradeable, could be implemented with Proxy contracts.
+
+Governance mechanism : In the contract, there will be a Vote method (part of the Validator Set Contract) that only Validators can call, passing a message and a Change function will be execute if more than 2/3 of the Validators agree on the Upgrade.
+
+Contract state would need to be transferred to the new version of the contract, either through a migration process or a persistent storage pattern.
+
+Programming Language: C++, Golang, Python, Rust
+
+Consensus Related References:
+Parity Tech Aura - Authority Round https://wiki.parity.io/Aura
+
+TomoChain (DPoS Code base in Golang)
+
+EOS
+
+TRON
+
+Ethereum's Proof of Work ( ethash )
+
+Ethereum's Proof of Authority ( clique )
+
+Ethereum's Proof of Stake ( casper )
+
+Proof of Stake-Velocity ( POSV )
+
+Smart contracts for PoS
+
+Help/Questions?
+
+Telegram Channel: https://t.me/XinFinDevelopers
+
+Slack Channel: https://xinfin-public.slack.com/messages/CELR2M831/
+Free Slack Invite LaunchPass : https://launchpass.com/xinfin-public
+
+Forum: http://XinFin.net
