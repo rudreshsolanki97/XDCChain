@@ -56,7 +56,7 @@ Masternode Holder need to Add Know your customer (KYC) identification as its fal
 
 ## Choosing Validators
 
-The problem is : how to choose $L$ Validators for a certain epoch $N$?
+choose $L$ Validators for a certain epoch $N$
 
 ### Balanced staked
 
@@ -108,7 +108,7 @@ Suggested parameter values from requirements:
 
 `MIN_STAKE`: 1,000,000 XDC
 
-`VALIDATOD_REWARD`: 0.01370%
+`VALIDATOD_REWARD`: 0.01370% /Daily
 
 `VALIDATOR_SET_SIZE`: 21
 
@@ -118,7 +118,7 @@ Suggested parameter values from requirements:
 
 ## Upgradability: 
 
-Contracts should be upgradeable, could be implemented with Proxy contracts. Would need to figure out a governance mechanism to determine how upgrades are authorised and enacted.
+Contracts is upgradeable, could be implemented with Proxy contracts. 2/3 Validator Vote is a governance mechanism to determine upgrades are authorised and enacted.
 
 Contract state would need to be transferred to the new version of the contract, either through a migration process or a persistent storage pattern.
 
