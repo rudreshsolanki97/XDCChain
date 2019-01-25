@@ -10,11 +10,6 @@ GO_FILES := $(shell find $(shell go list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.
 
 GIT = git
 
-tomo:
-	build/env.sh go run build/ci.go install ./cmd/tomo
-	@echo "Done building."
-	@echo "Run \"$(GOBIN)/tomo\" to launch tomo."
-
 bootnode:
 	build/env.sh go run build/ci.go install ./cmd/bootnode
 	@echo "Done building."
@@ -24,6 +19,11 @@ puppeth:
 	build/env.sh go run build/ci.go install ./cmd/puppeth
 	@echo "Done building."
 	@echo "Run \"$(GOBIN)/puppeth\" to launch puppeth."
+
+	gxdc:
+		build/env.sh go run build/ci.go install ./cmd/gxdc
+		@echo "Done building."
+		@echo "Run \"$(GOBIN)/gxdc\" to launch gxdc."
 
 all:
 	build/env.sh go run build/ci.go install
